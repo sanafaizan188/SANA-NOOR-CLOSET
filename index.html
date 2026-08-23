@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Order Booking Receipt Compiler - SANA NOOR COLLECTION</title>
+<style>
+  @page { size: A4 landscape; margin: 0; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0; background: #ececec;
+  }
+
+  @media print {
+    .panel, .tab-nav, .log-panel { display: none !important; }
+    body { background: white; }
+  }
+
+  /* ---------- TAB NAV ---------- */
+  .tab-nav {
+    max-width: 900px; margin: 18px auto 0; display: flex; gap: 8px;
+  }
+  .tab-btn {
+    flex: 1; padding: 10px; text-align: center; background: #ddd; color: #444;
+    border: none; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 13.5px; font-weight: 600;
+  }
+  .tab-btn.active { background: white; color: #111; }
+
+  /* ---------- INPUT PANEL (screen only) ---------- */
+  .panel {
+    max-width: 900px;
+    margin: 0 auto 18px;
+    background: white;
+    border-radius: 0 10px 10px 10px;
+    padding: 20px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    display: none;
+  }
+  .panel.active { display: block; }
+  .panel h2 { margin: 0 0 4px; font-size: 18px; color: #1a1a1a; }
+  .panel p.hint { margin: 0 0 12px; font-size: 12.5px; color: #777; line-height: 1.5; }
+  textarea {
+    width: 100%; min-height: 110px; font-size: 14px; padding: 10px;
+    border: 1px solid #ccc; border-radius: 6px; font-family: inherit; resize: vertical;
+  }
+  .row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 140px; }
+  .row label { font-size: 11px; font-weight: 600; color: #555; display: block; margin-bottom: 3px; }
+  .row input { width: 100%; padding: 7px 8px; font-size: 13px; border: 1px solid #ccc; border-radius: 5px; }
+  .btns { margin-top: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .btn { border: none; padding: 10px 20px; font-size: 14px; border-radius: 6px; cursor: pointer; }
+  .btn-primary { background: #1a1a1a; color: white; }
+  .btn-secondary { background: #eee; color: #333; }
+  .order-no-badge { font-size: 12.5px; color: #555; margin-left: auto; }
+  .parsed-preview { margin-top: 10px; font-size: 11.5px; color: #666; background: #f7f7f7; padding: 8px 10px; border-radius: 6px; }
+  .parsed-preview b { color: #222; }
+
+  /* ---------- DISPATCH LOG ---------- */
+  .log-panel {
+    max-width: 900px; margin: 0 auto 18px; background: white; border-radius: 0 10px 10px 10px;
+    padding: 18px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); display: none;
+  }
+  .log-panel.active { display: block; }
+  .log-search { width: 100%; padding: 8px 10px; font-size: 13px; border: 1px solid #ccc; border-radius: 6px; margin-bottom: 12px; }
+  table.log-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.log-table th {
+    background: #f5f5f5; text-align: left; padding: 6px 8px; border-bottom: 2px solid #ccc; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.3px; color: #555;
+  }
+  table.log-table td { padding: 6px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  .type-badge { padding: 2px 8px; border-radius: 10px; font-size: 10.5px; font-weight: 700; white-space: nowrap; }
+  .type-badge.cod { background: #fde8e8; color: #b33; }
+  .type-badge.advance { background: #e6f4ea; color: #276b3c; }
+  .track-input { width: 100%; padding: 5px 6px; font-size: 12px; border: 1px solid #ccc; border-radius: 4px; }
+  .save-track-btn { padding: 5px 10px; font-size: 11.5px; border: none; background: #1a1a1a; color: white; border-radius: 4px; cursor: pointer; }
+  .saved-tag { font-size: 10px; color: #2a8; margin-left: 6px; }
+  .log-empty { text-align: center; color: #999; padding: 20px; font-size: 13px; }
+  .log-actions { display: flex; gap: 10px; margin-top: 12px; }
+
+  /* ---------- RECEIPT PAGE ---------- */
+  .page {
+    width: 297mm; height: 210mm; margin: 10px auto; background: white;
+    padding: 8mm;
+    display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+    overflow: hidden;
+  }
+  @media print {
+    .page { margin: 0; padding: 8mm; page-break-after: always; page-break-inside: avoid; }
+    .page:last-child { page-break-after: auto; }
+  }
+  .receipt {
+    border: 1px dashed #999; padding: 5mm 7mm; display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .receipt.empty-slot { border: none; }
+  .top-row { display: flex; justify-content: space-between; align-items: flex-start; }
+  .doc-title { font-size: 11px; font-weight: 700; color: #333; letter-spacing: 0.4px; text-transform: uppercase; }
+  .order-meta { text-align: right; font-size: 10px; font-weight: 600; color: #333; line-height: 1.5; }
+  .order-meta .num { font-size: 12px; color: #111; }
+
+  .divider { border-top: 2px solid #1a1a1a; margin: 2.5mm 0; }
+
+  .section-title {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+    color: #555; margin: 2mm 0 1.5mm;
+  }
+  .field-line { display: flex; align-items: baseline; font-size: 10.5px; margin-bottom: 2mm; }
+  .field-line .label { font-weight: 700; color: #222; width: 22mm; flex-shrink: 0; }
+  .field-line .val { flex: 1; border-bottom: 1px solid #aaa; min-height: 13px; padding-bottom: 1px; }
+  .field-line.bold-val .val { font-weight: 700; color: #111; font-size: 11px; }
+
+  .order-box {
+    border: 1px solid #bbb; border-radius: 3px; margin-top: 1mm; min-height: 8mm;
+    font-size: 9.5px; color: #333; padding: 1.5mm 2mm; line-height: 1.4;
+  }
+
+  .from-footer {
+    margin-top: 2.5mm; padding-top: 2mm; border-top: 2px solid #1a1a1a;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .from-footer .brand { font-size: 14px; font-weight: 800; color: #111; letter-spacing: 0.3px; }
+  .from-footer .brand-contact { font-size: 10px; font-weight: 700; color: #333; margin-top: 1px; }
+  .from-footer .brand-addr { font-size: 9px; font-weight: 700; color: #222; margin-top: 1px; }
+  .from-footer .from-tag { font-size: 8px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1mm; }
+</style>
+</head>
+<body>
+
+<div class="tab-nav">
+  <button class="tab-btn active" id="tabNewBtn" onclick="switchTab('new')">📝 New Orders</button>
+  <button class="tab-btn" id="tabLogBtn" onclick="switchTab('log')">📦 Dispatch &amp; Tracking</button>
+</div>
+
+<div class="panel active" id="newOrdersPanel">
+  <h2>Order Booking Receipt Compiler</h2>
+  <p class="hint">Paste or type the consignee info in any order (name, address, phone). One item per line works best. Then fill COD amount if needed and hit Generate — order number and date are automatic.</p>
+
+  <textarea id="rawInput" placeholder="e.g.
+Ayesha Khan
+House 12, Street 5, Model Town, Lahore
+0321-4567890"></textarea>
+
+  <div class="row">
+    <div>
+      <label>Order Details (what did they order?)</label>
+      <textarea id="orderDetails" style="min-height:50px;" placeholder="e.g. 2x Lawn Suit (Medium, Blue), 1x Dupatta"></textarea>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>COD Amount Remaining (optional — leave blank if advance paid)</label>
+      <input type="text" id="codAmount" placeholder="e.g. Rs 2500 or leave blank">
+    </div>
+  </div>
+
+  <div class="btns">
+    <button class="btn btn-primary" onclick="generate()">Add This Order</button>
+    <button class="btn btn-secondary" onclick="window.print()">Print All Pages</button>
+    <button class="btn btn-secondary" onclick="resetBatch()">Start New Batch</button>
+    <button class="btn btn-secondary" onclick="resetOrderCounter()" style="background:#fce8e6; color:#a33;">Reset Order # to 0001</button>
+    <span class="order-no-badge" id="orderBadge"></span>
+  </div>
+
+  <div class="parsed-preview" id="parsedPreview" style="display:none;"></div>
+  <div class="parsed-preview" id="slotStatus">Orders added: 0 / 20 &nbsp;|&nbsp; Pages: 0</div>
+</div>
+
+<div class="log-panel" id="dispatchLogPanel">
+  <h2 style="margin:0 0 4px; font-size:18px; color:#1a1a1a;">Dispatch &amp; Tracking Log</h2>
+  <p class="hint" style="margin:0 0 12px; font-size:12.5px; color:#777;">
+    Every order you add on the "New Orders" tab automatically appears here — permanently, even after you close this page.
+    Once a parcel is booked with the courier, paste its tracking ID against the matching order.
+    COD orders are auto-tagged <b>VPP</b>, advance-paid orders are auto-tagged <b>Parcel</b>.
+  </p>
+
+  <input type="text" class="log-search" id="logSearch" placeholder="Search by order #, name, or contact..." oninput="renderLogTable()">
+
+  <div id="logTableWrap"></div>
+
+  <div class="log-actions">
+    <button class="btn btn-secondary" onclick="printLog()">🖨️ Print Log</button>
+    <button class="btn btn-secondary" onclick="exportLogCsv()">⬇️ Export as CSV</button>
+    <button class="btn btn-secondary" onclick="clearLog()" style="background:#fce8e6; color:#a33;">Clear Entire Log</button>
+  </div>
+</div>
+
+<div id="pages-container"></div>
+
+<script>
+/* ---------------- TAB SWITCHING ---------------- */
+function switchTab(tab) {
+  document.getElementById('newOrdersPanel').classList.toggle('active', tab === 'new');
+  document.getElementById('dispatchLogPanel').classList.toggle('active', tab === 'log');
+  document.getElementById('pages-container').style.display = (tab === 'new') ? 'block' : 'none';
+  document.getElementById('tabNewBtn').classList.toggle('active', tab === 'new');
+  document.getElementById('tabLogBtn').classList.toggle('active', tab === 'log');
+  if (tab === 'log') renderLogTable();
+}
+
+/* ---------------- ORDER NUMBER + DATE ---------------- */
+function getNextOrderNumber() {
+  let n = parseInt(localStorage.getItem('snc_order_counter') || '0', 10) + 1;
+  localStorage.setItem('snc_order_counter', n);
+  return String(n).padStart(4, '0');
+}
+
+function todayFormatted() {
+  const d = new Date();
+  return d.toLocaleDateString('en-GB'); // dd/mm/yyyy
+}
+
+/* ---------------- PARSING ---------------- */
+function parseInput(raw) {
+  let lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length <= 1) {
+    lines = raw.split(',').map(l => l.trim()).filter(Boolean);
+  }
+
+  let name = '', contact = '', addressLines = [];
+  const phoneRegex = /(\+92[\s-]?\d{2,4}[\s-]?\d{6,8})|(0\d{2,4}[\s-]?\d{6,8})/;
+
+  lines.forEach(line => {
+    const digitCount = (line.match(/\d/g) || []).length;
+    if (phoneRegex.test(line) && digitCount >= 9) {
+      contact = contact ? contact + ' / ' + line : line;
+    } else if (!name) {
+      name = line;
+    } else {
+      addressLines.push(line);
+    }
+  });
+
+  return {
+    name: name || '',
+    address: addressLines.join(', ') || '',
+    contact: contact || ''
+  };
+}
+
+/* ---------------- RECEIPT BUILDING ---------------- */
+function buildReceipt(data, orderNo, date, cod, orderDetails) {
+  return `
+    <div class="receipt">
+      <div class="top-row">
+        <div class="doc-title">Order Booking Receipt</div>
+        <div class="order-meta">
+          Order #<br><span class="num">${orderNo}</span><br>
+          ${date}
+        </div>
+      </div>
+      <div class="divider"></div>
+
+      <div class="section-title">Consignee</div>
+      <div class="field-line bold-val"><span class="label">Name</span><span class="val">${data.name}</span></div>
+      <div class="field-line bold-val"><span class="label">Address</span><span class="val">${data.address}</span></div>
+      <div class="field-line"><span class="label">Contact</span><span class="val">${data.contact}</span></div>
+      <div class="field-line bold-val"><span class="label">COD Remaining</span><span class="val">${cod}</span></div>
+
+      <div class="section-title">Order Details</div>
+      <div class="order-box">${(orderDetails || '').replace(/\n/g, '<br>')}</div>
+      <div style="flex-grow:1;"></div>
+
+      <div class="from-footer">
+        <div>
+          <div class="from-tag">From</div>
+          <div class="brand">SANA NOOR COLLECTION</div>
+          <div class="brand-contact">📞 03134321466</div>
+          <div class="brand-addr">C/O AM Car Wash, Behind Bahria Town Cinema, Lahore</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function buildEmptySlot() {
+  return `<div class="receipt empty-slot"></div>`;
+}
+
+/* ---------------- ADD / GENERATE ---------------- */
+function generate() {
+  const MAX_ORDERS = 20;
+  if (receipts.length >= MAX_ORDERS) {
+    alert(`You've reached the ${MAX_ORDERS}-order limit for this batch. Click "Print All Pages" now, then "Start New Batch" to continue with fresh pages.`);
+    return;
+  }
+
+  const raw = document.getElementById('rawInput').value;
+  const cod = document.getElementById('codAmount').value.trim();
+  const orderDetails = document.getElementById('orderDetails').value.trim();
+  const data = parseInput(raw);
+  const orderNo = getNextOrderNumber();
+  const date = todayFormatted();
+
+  receipts.push({ data, orderNo, date, cod: cod || '', orderDetails });
+
+  // Also permanently log this order for dispatch/tracking, regardless of the current batch.
+  addToLog({ orderNo, date, data, cod: cod || '', orderDetails });
+
+  document.getElementById('orderBadge').textContent = `Assigned Order #${orderNo} — ${date}`;
+  const preview = document.getElementById('parsedPreview');
+  preview.style.display = 'block';
+  preview.innerHTML = `<b>Parsed →</b> Name: <b>${data.name || '—'}</b> | Address: <b>${data.address || '—'}</b> | Contact: <b>${data.contact || '—'}</b>`;
+
+  document.getElementById('rawInput').value = '';
+  document.getElementById('codAmount').value = '';
+  document.getElementById('orderDetails').value = '';
+  document.getElementById('rawInput').focus();
+
+  renderAll();
+}
+
+function resetBatch() {
+  if (receipts.length > 0 && !confirm('Clear all orders and start a fresh batch? (Order numbers already assigned will not be reused. Your Dispatch Log is not affected.)')) return;
+  receipts = [];
+  renderAll();
+  document.getElementById('parsedPreview').style.display = 'none';
+  document.getElementById('orderBadge').textContent = '';
+}
+
+function renderAll() {
+  const total = receipts.length;
+  const numPages = total === 0 ? 1 : Math.ceil(total / 4);
+  document.getElementById('slotStatus').textContent =
+    `Orders added: ${total} / 20  |  Pages: ${total === 0 ? 0 : numPages}`;
+
+  let pagesHtml = '';
+  for (let p = 0; p < numPages; p++) {
+    let pageContent = '';
+    for (let slot = 0; slot < 4; slot++) {
+      const idx = p * 4 + slot;
+      if (receipts[idx]) {
+        const r = receipts[idx];
+        pageContent += buildReceipt(r.data, r.orderNo, r.date, r.cod, r.orderDetails);
+      } else if (total === 0) {
+        pageContent += buildReceipt({name:'', address:'', contact:''}, '----', todayFormatted(), '', '');
+      } else {
+        pageContent += buildEmptySlot();
+      }
+    }
+    pagesHtml += `<div class="page">${pageContent}</div>`;
+  }
+  document.getElementById('pages-container').innerHTML = pagesHtml;
+}
+
+function resetOrderCounter() {
+  if (!confirm('Reset the order number counter back to 0001? This does not affect any receipts already printed, or your Dispatch Log.')) return;
+  localStorage.setItem('snc_order_counter', '0');
+  alert('Order counter reset. The next order you add will be #0001.');
+}
+
+let receipts = [];
+
+/* ---------------- DISPATCH & TRACKING LOG ---------------- */
+function getLog() {
+  try {
+    return JSON.parse(localStorage.getItem('snc_order_log') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveLog(log) {
+  localStorage.setItem('snc_order_log', JSON.stringify(log));
+}
+
+function addToLog(entry) {
+  const log = getLog();
+  const isCod = !!entry.cod;
+  log.push({
+    orderNo: entry.orderNo,
+    date: entry.date,
+    name: entry.data.name,
+    address: entry.data.address,
+    contact: entry.data.contact,
+    codAmount: entry.cod,
+    orderDetails: entry.orderDetails || '',
+    type: isCod ? 'COD' : 'Advance',
+    courier: isCod ? 'VPP' : 'Parcel',
+    trackingId: ''
+  });
+  saveLog(log);
+}
+
+function renderLogTable() {
+  const log = getLog();
+  const query = (document.getElementById('logSearch').value || '').toLowerCase().trim();
+  const filtered = log.filter(o =>
+    !query ||
+    o.orderNo.toLowerCase().includes(query) ||
+    o.name.toLowerCase().includes(query) ||
+    o.contact.toLowerCase().includes(query)
+  );
+
+  const wrap = document.getElementById('logTableWrap');
+  if (filtered.length === 0) {
+    wrap.innerHTML = `<div class="log-empty">${log.length === 0 ? 'No orders yet. Add one from the "New Orders" tab.' : 'No orders match your search.'}</div>`;
+    return;
+  }
+
+  let rows = '';
+  filtered.forEach((o, i) => {
+    const realIndex = log.indexOf(o);
+    const badgeClass = o.type === 'COD' ? 'cod' : 'advance';
+    rows += `
+      <tr>
+        <td><b>${o.orderNo}</b></td>
+        <td>${o.date}</td>
+        <td>${o.name}</td>
+        <td>${o.contact}</td>
+        <td><span class="type-badge ${badgeClass}">${o.type}${o.codAmount ? ' - ' + o.codAmount : ''}</span></td>
+        <td><span class="type-badge ${badgeClass}">${o.courier}</span></td>
+        <td>
+          <input type="text" class="track-input" id="track_${realIndex}" value="${o.trackingId || ''}" placeholder="Enter tracking ID">
+        </td>
+        <td>
+          <button class="save-track-btn" onclick="saveTracking(${realIndex})">Save</button>
+          <span class="saved-tag" id="saved_${realIndex}">✔ Saved</span>
+        </td>
+      </tr>`;
+  });
+
+  wrap.innerHTML = `
+    <table class="log-table">
+      <thead>
+        <tr>
+          <th>Order #</th><th>Date</th><th>Name</th><th>Contact</th>
+          <th>Type</th><th>Courier</th><th>Tracking ID</th><th></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function saveTracking(index) {
+  const log = getLog();
+  const input = document.getElementById('track_' + index);
+  log[index].trackingId = input.value.trim();
+  saveLog(log);
+  const tag = document.getElementById('saved_' + index);
+  tag.style.display = 'inline';
+  setTimeout(() => { tag.style.display = 'none'; }, 1500);
+}
+
+function clearLog() {
+  if (!confirm('Permanently delete the entire dispatch log? This cannot be undone.')) return;
+  localStorage.setItem('snc_order_log', '[]');
+  renderLogTable();
+}
+
+function printLog() {
+  const log = getLog();
+  if (log.length === 0) { alert('No orders logged yet.'); return; }
+  let rows = '';
+  log.forEach(o => {
+    rows += `<tr>
+      <td>${o.orderNo}</td><td>${o.date}</td><td>${o.name}</td><td>${o.address}</td>
+      <td>${o.contact}</td><td>${o.type}${o.codAmount ? ' (' + o.codAmount + ')' : ''}</td>
+      <td>${o.courier}</td><td>${o.trackingId || '-'}</td>
+    </tr>`;
+  });
+  const html = `
+    <html><head><title>Dispatch Log - SANA NOOR COLLECTION</title>
+    <style>
+      @page { size: A4 portrait; margin: 12mm; }
+      body { font-family: Arial, sans-serif; font-size: 11px; }
+      h2 { margin-bottom: 2px; }
+      p { margin-top: 0; color: #555; font-size: 11px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+      th, td { border: 1px solid #999; padding: 5px 6px; text-align: left; }
+      th { background: #eee; }
+    </style></head>
+    <body>
+      <h2>SANA NOOR COLLECTION — Dispatch &amp; Tracking Log</h2>
+      <p>Contact: 03134321466 | C/O AM Car Wash, Behind Bahria Town Cinema, Lahore</p>
+      <table>
+        <thead><tr>
+          <th>Order #</th><th>Date</th><th>Name</th><th>Address</th>
+          <th>Contact</th><th>Type</th><th>Courier</th><th>Tracking ID</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </body></html>`;
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  w.onload = () => w.print();
+}
+
+function exportLogCsv() {
+  const log = getLog();
+  if (log.length === 0) { alert('No orders logged yet.'); return; }
+  const header = ['Order #','Date','Name','Address','Contact','Type','COD Amount','Order Details','Courier','Tracking ID'];
+  const rows = log.map(o => [o.orderNo, o.date, o.name, o.address, o.contact, o.type, o.codAmount, o.orderDetails, o.courier, o.trackingId]);
+  const csv = [header, ...rows].map(r =>
+    r.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',')
+  ).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `SNC_dispatch_log_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+window.onload = () => {
+  renderAll();
+};
+</script>
+
+</body>
+</html>
