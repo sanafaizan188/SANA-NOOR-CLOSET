@@ -254,7 +254,7 @@ function buildReceipt(data, orderNo, date, cod, orderDetails) {
       <div class="section-title">Consignee</div>
       <div class="field-line bold-val"><span class="label">Name</span><span class="val">${data.name}</span></div>
       <div class="field-line bold-val"><span class="label">Address</span><span class="val">${data.address}</span></div>
-      <div class="field-line"><span class="label">Contact</span><span class="val">${data.contact}</span></div>
+      <div class="field-line bold-val"><span class="label">Contact</span><span class="val">${data.contact}</span></div>
       <div class="field-line bold-val"><span class="label">COD Remaining</span><span class="val">${cod}</span></div>
 
       <div class="section-title">Order Details</div>
@@ -293,6 +293,7 @@ function generate() {
   const date = todayFormatted();
 
   receipts.push({ data, orderNo, date, cod: cod || '', orderDetails });
+  saveBatch();
 
   // Also permanently log this order for dispatch/tracking, regardless of the current batch.
   addToLog({ orderNo, date, data, cod: cod || '', orderDetails });
@@ -313,6 +314,7 @@ function generate() {
 function resetBatch() {
   if (receipts.length > 0 && !confirm('Clear all orders and start a fresh batch? (Order numbers already assigned will not be reused. Your Dispatch Log is not affected.)')) return;
   receipts = [];
+  saveBatch();
   renderAll();
   document.getElementById('parsedPreview').style.display = 'none';
   document.getElementById('orderBadge').textContent = '';
@@ -349,7 +351,19 @@ function resetOrderCounter() {
   alert('Order counter reset. The next order you add will be #0001.');
 }
 
-let receipts = [];
+function getSavedBatch() {
+  try {
+    return JSON.parse(localStorage.getItem('snc_current_batch') || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveBatch() {
+  localStorage.setItem('snc_current_batch', JSON.stringify(receipts));
+}
+
+let receipts = getSavedBatch();
 
 /* ---------------- DISPATCH & TRACKING LOG ---------------- */
 function getLog() {
