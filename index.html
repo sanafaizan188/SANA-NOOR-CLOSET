@@ -93,10 +93,9 @@
     overflow: hidden;
   }
   .receipt.empty-slot { border: none; }
-  .top-row { display: flex; justify-content: space-between; align-items: flex-start; }
-  .doc-title { font-size: 11px; font-weight: 700; color: #333; letter-spacing: 0.4px; text-transform: uppercase; }
-  .order-meta { text-align: right; font-size: 10px; font-weight: 600; color: #333; line-height: 1.5; }
-  .order-meta .num { font-size: 12px; color: #111; }
+  .top-row { display: flex; justify-content: flex-end; align-items: center; }
+  .order-meta { text-align: right; font-size: 10.5px; font-weight: 600; color: #333; }
+  .order-meta .num { font-size: 12px; color: #111; font-weight: 700; }
 
   .divider { border-top: 2px solid #1a1a1a; margin: 2.5mm 0; }
 
@@ -104,10 +103,10 @@
     font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
     color: #555; margin: 2mm 0 1.5mm;
   }
-  .field-line { display: flex; align-items: baseline; font-size: 10.5px; margin-bottom: 2mm; }
-  .field-line .label { font-weight: 700; color: #222; width: 22mm; flex-shrink: 0; }
-  .field-line .val { flex: 1; border-bottom: 1px solid #aaa; min-height: 13px; padding-bottom: 1px; }
-  .field-line.bold-val .val { font-weight: 700; color: #111; font-size: 11px; }
+  .field-line { display: flex; align-items: baseline; font-size: 11.5px; margin-bottom: 2.3mm; }
+  .field-line .label { font-weight: 700; color: #222; width: 23mm; flex-shrink: 0; }
+  .field-line .val { flex: 1; border-bottom: 1px solid #aaa; min-height: 14px; padding-bottom: 1px; }
+  .field-line.bold-val .val { font-weight: 700; color: #111; font-size: 13px; }
 
   .order-box {
     border: 1px solid #bbb; border-radius: 3px; margin-top: 1mm; min-height: 8mm;
@@ -243,10 +242,8 @@ function buildReceipt(data, orderNo, date, cod, orderDetails) {
   return `
     <div class="receipt">
       <div class="top-row">
-        <div class="doc-title">Order Booking Receipt</div>
         <div class="order-meta">
-          Order #<br><span class="num">${orderNo}</span><br>
-          ${date}
+          Order #<span class="num">${orderNo}</span> &nbsp;|&nbsp; ${date}
         </div>
       </div>
       <div class="divider"></div>
