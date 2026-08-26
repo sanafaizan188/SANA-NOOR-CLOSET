@@ -12,7 +12,7 @@
   }
 
   @media print {
-    .panel, .tab-nav, .log-panel { display: none !important; }
+    .panel, .tab-nav, .log-panel, .page-controls { display: none !important; }
     body { background: white; }
   }
 
@@ -78,15 +78,24 @@
   .log-actions { display: flex; gap: 10px; margin-top: 12px; }
 
   /* ---------- RECEIPT PAGE ---------- */
+  .page-block { }
   .page {
     width: 297mm; height: 210mm; margin: 10px auto; background: white;
     padding: 8mm;
     display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
     overflow: hidden;
   }
+  .page-controls {
+    max-width: 297mm; margin: 6px auto 0; display: flex; align-items: center; gap: 10px;
+    padding: 0 4px;
+  }
+  .page-controls-label { font-size: 12.5px; font-weight: 600; color: #555; margin-right: auto; }
+  .page-btn { padding: 6px 12px; font-size: 12px; }
+  .mark-printed-btn { background: #e6f4ea; color: #276b3c; }
   @media print {
-    .page { margin: 0; padding: 8mm; page-break-after: always; page-break-inside: avoid; }
-    .page:last-child { page-break-after: auto; }
+    .page { margin: 0; padding: 8mm; }
+    .page-block { page-break-after: always; page-break-inside: avoid; }
+    .page-block:last-child { page-break-after: auto; }
   }
   .receipt {
     border: 1px dashed #999; padding: 5mm 7mm; display: flex; flex-direction: column;
@@ -163,6 +172,7 @@ House 12, Street 5, Model Town, Lahore
 
   <div class="parsed-preview" id="parsedPreview" style="display:none;"></div>
   <div class="parsed-preview" id="slotStatus">Orders added: 0 / 20 &nbsp;|&nbsp; Pages: 0</div>
+  <p class="hint" style="margin-top:8px;">💡 Each page below has its own <b>"Print This Page"</b> and <b>"Mark Printed & Remove"</b> buttons. Only mark a page as printed after you've actually printed it — it'll be removed from this batch and flagged in your Dispatch Log, while any un-printed orders on other pages stay put.</p>
 </div>
 
 <div class="log-panel" id="dispatchLogPanel">
@@ -278,7 +288,7 @@ function buildEmptySlot() {
 function generate() {
   const MAX_ORDERS = 20;
   if (receipts.length >= MAX_ORDERS) {
-    alert(`You've reached the ${MAX_ORDERS}-order limit for this batch. Click "Print All Pages" now, then "Start New Batch" to continue with fresh pages.`);
+    alert(`You've reached the ${MAX_ORDERS}-order limit for this batch. Print and mark pages as printed (they'll be removed automatically), or use "Start New Batch" to clear everything.`);
     return;
   }
 
@@ -288,8 +298,9 @@ function generate() {
   const data = parseInput(raw);
   const orderNo = getNextOrderNumber();
   const date = todayFormatted();
+  const logIndex = getLog().length; // index this order will occupy in the log
 
-  receipts.push({ data, orderNo, date, cod: cod || '', orderDetails });
+  receipts.push({ data, orderNo, date, cod: cod || '', orderDetails, logIndex });
   saveBatch();
 
   // Also permanently log this order for dispatch/tracking, regardless of the current batch.
@@ -326,20 +337,69 @@ function renderAll() {
   let pagesHtml = '';
   for (let p = 0; p < numPages; p++) {
     let pageContent = '';
+    let ordersOnPage = 0;
     for (let slot = 0; slot < 4; slot++) {
       const idx = p * 4 + slot;
       if (receipts[idx]) {
         const r = receipts[idx];
         pageContent += buildReceipt(r.data, r.orderNo, r.date, r.cod, r.orderDetails);
+        ordersOnPage++;
       } else if (total === 0) {
         pageContent += buildReceipt({name:'', address:'', contact:''}, '----', todayFormatted(), '', '');
       } else {
         pageContent += buildEmptySlot();
       }
     }
-    pagesHtml += `<div class="page">${pageContent}</div>`;
+    const controls = total === 0 ? '' : `
+      <div class="page-controls">
+        <span class="page-controls-label">Page ${p + 1} — ${ordersOnPage} order${ordersOnPage === 1 ? '' : 's'}</span>
+        <button class="btn btn-secondary page-btn" onclick="printPage(${p})">🖨️ Print This Page</button>
+        <button class="btn btn-secondary page-btn mark-printed-btn" onclick="markPagePrinted(${p})">✅ Mark Printed &amp; Remove</button>
+      </div>`;
+    pagesHtml += `<div class="page-block">${controls}<div class="page" data-page-index="${p}">${pageContent}</div></div>`;
   }
   document.getElementById('pages-container').innerHTML = pagesHtml;
+}
+
+function printPage(pageIndex) {
+  const allBlocks = document.querySelectorAll('.page-block');
+  allBlocks.forEach((block) => {
+    const pageEl = block.querySelector('.page');
+    const idx = parseInt(pageEl.getAttribute('data-page-index'), 10);
+    if (idx === pageIndex) {
+      block.style.display = '';
+      block.style.pageBreakAfter = 'auto';
+    } else {
+      block.style.display = 'none';
+    }
+  });
+  window.print();
+  allBlocks.forEach((block) => {
+    block.style.display = '';
+    block.style.pageBreakAfter = '';
+  });
+}
+
+function markPagePrinted(pageIndex) {
+  const startIdx = pageIndex * 4;
+  const endIdx = Math.min(startIdx + 4, receipts.length);
+  if (startIdx >= receipts.length) return;
+
+  const count = endIdx - startIdx;
+  if (!confirm(`Mark ${count} order(s) on Page ${pageIndex + 1} as printed and remove them from this batch? (They'll stay permanently in your Dispatch Log, just flagged as printed.)`)) return;
+
+  const log = getLog();
+  for (let i = startIdx; i < endIdx; i++) {
+    const r = receipts[i];
+    if (r && typeof r.logIndex === 'number' && log[r.logIndex]) {
+      log[r.logIndex].printed = true;
+    }
+  }
+  saveLog(log);
+
+  receipts.splice(startIdx, count);
+  saveBatch();
+  renderAll();
 }
 
 function resetOrderCounter() {
@@ -388,7 +448,8 @@ function addToLog(entry) {
     orderDetails: entry.orderDetails || '',
     type: isCod ? 'COD' : 'Advance',
     courier: isCod ? 'VPP' : 'Parcel',
-    trackingId: ''
+    trackingId: '',
+    printed: false
   });
   saveLog(log);
 }
@@ -413,6 +474,9 @@ function renderLogTable() {
   filtered.forEach((o, i) => {
     const realIndex = log.indexOf(o);
     const badgeClass = o.type === 'COD' ? 'cod' : 'advance';
+    const printedBadge = o.printed
+      ? `<span class="type-badge advance">✅ Printed</span>`
+      : `<span class="type-badge cod">Not Printed</span>`;
     rows += `
       <tr>
         <td><b>${o.orderNo}</b></td>
@@ -421,6 +485,7 @@ function renderLogTable() {
         <td>${o.contact}</td>
         <td><span class="type-badge ${badgeClass}">${o.type}${o.codAmount ? ' - ' + o.codAmount : ''}</span></td>
         <td><span class="type-badge ${badgeClass}">${o.courier}</span></td>
+        <td>${printedBadge}</td>
         <td>
           <input type="text" class="track-input" id="track_${realIndex}" value="${o.trackingId || ''}" placeholder="Enter tracking ID">
         </td>
@@ -436,7 +501,7 @@ function renderLogTable() {
       <thead>
         <tr>
           <th>Order #</th><th>Date</th><th>Name</th><th>Contact</th>
-          <th>Type</th><th>Courier</th><th>Tracking ID</th><th></th>
+          <th>Type</th><th>Courier</th><th>Print Status</th><th>Tracking ID</th><th></th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -467,7 +532,7 @@ function printLog() {
     rows += `<tr>
       <td>${o.orderNo}</td><td>${o.date}</td><td>${o.name}</td><td>${o.address}</td>
       <td>${o.contact}</td><td>${o.type}${o.codAmount ? ' (' + o.codAmount + ')' : ''}</td>
-      <td>${o.courier}</td><td>${o.trackingId || '-'}</td>
+      <td>${o.courier}</td><td>${o.printed ? 'Printed' : 'Not Printed'}</td><td>${o.trackingId || '-'}</td>
     </tr>`;
   });
   const html = `
@@ -487,7 +552,7 @@ function printLog() {
       <table>
         <thead><tr>
           <th>Order #</th><th>Date</th><th>Name</th><th>Address</th>
-          <th>Contact</th><th>Type</th><th>Courier</th><th>Tracking ID</th>
+          <th>Contact</th><th>Type</th><th>Courier</th><th>Print Status</th><th>Tracking ID</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
@@ -501,8 +566,8 @@ function printLog() {
 function exportLogCsv() {
   const log = getLog();
   if (log.length === 0) { alert('No orders logged yet.'); return; }
-  const header = ['Order #','Date','Name','Address','Contact','Type','COD Amount','Order Details','Courier','Tracking ID'];
-  const rows = log.map(o => [o.orderNo, o.date, o.name, o.address, o.contact, o.type, o.codAmount, o.orderDetails, o.courier, o.trackingId]);
+  const header = ['Order #','Date','Name','Address','Contact','Type','COD Amount','Order Details','Courier','Print Status','Tracking ID'];
+  const rows = log.map(o => [o.orderNo, o.date, o.name, o.address, o.contact, o.type, o.codAmount, o.orderDetails, o.courier, o.printed ? 'Printed' : 'Not Printed', o.trackingId]);
   const csv = [header, ...rows].map(r =>
     r.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',')
   ).join('\n');
