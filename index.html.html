@@ -38,21 +38,21 @@
   }
   .panel.active { display: block; }
   .panel h2 { margin: 0 0 4px; font-size: 18px; color: #1a1a1a; }
-  .panel p.hint { margin: 0 0 12px; font-size: 12.5px; color: #777; line-height: 1.5; }
+  .panel p.hint { margin: 0 0 12px; font-size: 14px; color: #777; line-height: 1.5; }
   textarea {
-    width: 100%; min-height: 110px; font-size: 14px; padding: 10px;
+    width: 100%; min-height: 130px; font-size: 20px; font-weight: 600; padding: 12px;
     border: 1px solid #ccc; border-radius: 6px; font-family: inherit; resize: vertical;
   }
   .row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
   .row > div { flex: 1; min-width: 140px; }
-  .row label { font-size: 11px; font-weight: 600; color: #555; display: block; margin-bottom: 3px; }
-  .row input { width: 100%; padding: 7px 8px; font-size: 13px; border: 1px solid #ccc; border-radius: 5px; }
+  .row label { font-size: 13px; font-weight: 600; color: #555; display: block; margin-bottom: 3px; }
+  .row input { width: 100%; padding: 10px; font-size: 16px; border: 1px solid #ccc; border-radius: 5px; }
   .btns { margin-top: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-  .btn { border: none; padding: 10px 20px; font-size: 14px; border-radius: 6px; cursor: pointer; }
+  .btn { border: none; padding: 12px 20px; font-size: 16px; border-radius: 6px; cursor: pointer; }
   .btn-primary { background: #1a1a1a; color: white; }
   .btn-secondary { background: #eee; color: #333; }
   .order-no-badge { font-size: 12.5px; color: #555; margin-left: auto; }
-  .parsed-preview { margin-top: 10px; font-size: 11.5px; color: #666; background: #f7f7f7; padding: 8px 10px; border-radius: 6px; }
+  .parsed-preview { margin-top: 10px; font-size: 13.5px; color: #666; background: #f7f7f7; padding: 8px 10px; border-radius: 6px; }
   .parsed-preview b { color: #222; }
 
   /* ---------- DISPATCH LOG ---------- */
@@ -98,24 +98,24 @@
     .page-block:last-child { page-break-after: auto; }
   }
   .receipt {
-    border: 1px dashed #999; padding: 5mm 7mm; display: flex; flex-direction: column;
+    border: 1px dashed #999; padding: 4mm 6mm; display: flex; flex-direction: column;
     overflow: hidden;
   }
   .receipt.empty-slot { border: none; }
   .top-row { display: flex; justify-content: flex-end; align-items: center; }
-  .order-meta { text-align: right; font-size: 10.5px; font-weight: 600; color: #333; }
-  .order-meta .num { font-size: 12px; color: #111; font-weight: 700; }
+  .order-meta { text-align: right; font-size: 14px; font-weight: 700; color: #222; }
+  .order-meta .num { font-size: 16px; color: #000; font-weight: 800; }
 
-  .divider { border-top: 2px solid #1a1a1a; margin: 2.5mm 0; }
+  .divider { border-top: 2px solid #1a1a1a; margin: 2mm 0 3mm; }
 
   .section-title {
     font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
     color: #555; margin: 2mm 0 1.5mm;
   }
-  .field-line { display: flex; align-items: baseline; font-size: 11.5px; margin-bottom: 2.3mm; }
-  .field-line .label { font-weight: 700; color: #222; width: 23mm; flex-shrink: 0; }
-  .field-line .val { flex: 1; border-bottom: 1px solid #aaa; min-height: 14px; padding-bottom: 1px; }
-  .field-line.bold-val .val { font-weight: 700; color: #111; font-size: 13px; }
+  .field-line { display: flex; align-items: baseline; font-size: 15px; margin-bottom: 1.8mm; }
+  .field-line .label { font-weight: 800; color: #111; width: 36mm; flex-shrink: 0; }
+  .field-line .val { flex: 1; border-bottom: 1.5px solid #777; min-height: 28px; padding-bottom: 1px; line-height: 1.12; }
+  .field-line.bold-val .val { font-weight: 800; color: #000; font-size: 22px; }
 
   .order-box {
     border: 1px solid #bbb; border-radius: 3px; margin-top: 1mm; min-height: 8mm;
@@ -126,10 +126,10 @@
     margin-top: 2.5mm; padding-top: 2mm; border-top: 2px solid #1a1a1a;
     display: flex; justify-content: space-between; align-items: center;
   }
-  .from-footer .brand { font-size: 14px; font-weight: 800; color: #111; letter-spacing: 0.3px; }
-  .from-footer .brand-contact { font-size: 10px; font-weight: 700; color: #333; margin-top: 1px; }
-  .from-footer .brand-addr { font-size: 9px; font-weight: 700; color: #222; margin-top: 1px; }
-  .from-footer .from-tag { font-size: 8px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1mm; }
+  .from-footer .brand { font-size: 18px; font-weight: 800; color: #111; letter-spacing: 0.3px; }
+  .from-footer .brand-contact { font-size: 14px; font-weight: 700; color: #333; margin-top: 1px; }
+  .from-footer .brand-addr { font-size: 11.5px; font-weight: 700; color: #222; margin-top: 1px; }
+  .from-footer .from-tag { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 1mm; }
 </style>
 </head>
 <body>
@@ -150,7 +150,7 @@ House 12, Street 5, Model Town, Lahore
 
   <div class="row">
     <div>
-      <label>Order Details (what did they order?)</label>
+      <label>Order Details (saved in log only, not printed on slip)</label>
       <textarea id="orderDetails" style="min-height:50px;" placeholder="e.g. 2x Lawn Suit (Medium, Blue), 1x Dupatta"></textarea>
     </div>
   </div>
@@ -189,13 +189,14 @@ House 12, Street 5, Model Town, Lahore
 
   <div class="log-actions">
     <button class="btn btn-secondary" onclick="printLog()">🖨️ Print Log</button>
-    <button class="btn btn-secondary" onclick="exportLogCsv()">⬇️ Export as CSV</button>
+    <button class="btn btn-secondary" onclick="exportLogCsv()">⬇️ Export as Excel File</button>
     <button class="btn btn-secondary" onclick="clearLog()" style="background:#fce8e6; color:#a33;">Clear Entire Log</button>
   </div>
 </div>
 
 <div id="pages-container"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 /* ---------------- TAB SWITCHING ---------------- */
 function switchTab(tab) {
@@ -258,14 +259,11 @@ function buildReceipt(data, orderNo, date, cod, orderDetails) {
       </div>
       <div class="divider"></div>
 
-      <div class="section-title">Consignee</div>
       <div class="field-line bold-val"><span class="label">Name</span><span class="val">${data.name}</span></div>
       <div class="field-line bold-val"><span class="label">Address</span><span class="val">${data.address}</span></div>
       <div class="field-line bold-val"><span class="label">Contact</span><span class="val">${data.contact}</span></div>
       <div class="field-line bold-val"><span class="label">COD Remaining</span><span class="val">${cod}</span></div>
 
-      <div class="section-title">Order Details</div>
-      <div class="order-box">${(orderDetails || '').replace(/\n/g, '<br>')}</div>
       <div style="flex-grow:1;"></div>
 
       <div class="from-footer">
@@ -566,18 +564,28 @@ function printLog() {
 function exportLogCsv() {
   const log = getLog();
   if (log.length === 0) { alert('No orders logged yet.'); return; }
+
   const header = ['Order #','Date','Name','Address','Contact','Type','COD Amount','Order Details','Courier','Print Status','Tracking ID'];
-  const rows = log.map(o => [o.orderNo, o.date, o.name, o.address, o.contact, o.type, o.codAmount, o.orderDetails, o.courier, o.printed ? 'Printed' : 'Not Printed', o.trackingId]);
-  const csv = [header, ...rows].map(r =>
-    r.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',')
-  ).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `SNC_dispatch_log_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  const rows = log.map(o => [
+    o.orderNo, o.date, o.name, o.address, o.contact, o.type,
+    o.codAmount || '', o.orderDetails || '', o.courier,
+    o.printed ? 'Printed' : 'Not Printed', o.trackingId || ''
+  ]);
+
+  const worksheetData = [header, ...rows];
+  const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+
+  // reasonable column widths so it's readable immediately, not squished
+  worksheet['!cols'] = [
+    { wch: 9 }, { wch: 11 }, { wch: 18 }, { wch: 30 }, { wch: 14 },
+    { wch: 9 }, { wch: 12 }, { wch: 26 }, { wch: 9 }, { wch: 12 }, { wch: 16 }
+  ];
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Dispatch Log');
+
+  const filename = `SNC_dispatch_log_${new Date().toISOString().slice(0,10)}.xlsx`;
+  XLSX.writeFile(workbook, filename);
 }
 
 window.onload = () => {
